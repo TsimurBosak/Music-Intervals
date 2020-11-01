@@ -6,6 +6,10 @@ public class Intervals {
 
     private static int semitoneGap;
 
+    private static int startNotePosition;
+
+    private static int endNotePosition;
+
     private static String[] notes = new String[]{"C", "D", "E", "F", "G", "A", "B"};
 
     private static String[] allowedToInputNotes = new String[]{"Cb", "C", "C#", "Db", "D", "D#", "Eb", "E", "E#", "Fb", "F",
@@ -28,7 +32,15 @@ public class Intervals {
 
 
     public static String intervalIdentification(String[] args) {
-        return "";
+        if (args.length > 3 || args.length < 2)
+            throw new IllegalArgumentException("Illegal number of elements in input array");
+        if (args.length == 3) {
+            if (args[2].equals("dsc")) {
+                order = false;
+                return getIntervalDsc(args[0],args[1]);
+            }
+        }
+        return getIntervalAsc(args[0], args[1]);
     }
 
     private static String getResultNoteAsc(String firstNote) {
@@ -128,6 +140,132 @@ public class Intervals {
         return null;
     }
 
+    private static int getNoteGapForInterval(String firstNote, String endNote) {
+
+        int clearNoteGap = 0;
+
+        if (firstNote.substring(0, 1).equals(endNote.substring(0, 1))) {
+            clearNoteGap = 8;
+            return clearNoteGap;
+        }
+
+        for (int i = 0; i < notes.length; i++) {
+            if (firstNote.substring(0, 1).equals(notes[i]))
+                startNotePosition = i;
+            if (endNote.substring(0, 1).equals(notes[i]))
+                endNotePosition = i;
+        }
+
+        if (order) {
+            if (endNotePosition > startNotePosition)
+                clearNoteGap = endNotePosition - startNotePosition + 1;
+            else
+                clearNoteGap = notes.length - startNotePosition + endNotePosition + 1;
+        } else {
+            if (startNotePosition > endNotePosition)
+                clearNoteGap = startNotePosition - endNotePosition + 1;
+            else
+                clearNoteGap = notes.length - endNotePosition + startNotePosition + 1;
+        }
+
+        if (clearNoteGap == 0)
+            throw new IllegalArgumentException("Illegal input notes");
+        return clearNoteGap;
+    }
+
+    private static int getAccidentalShift(String note) {
+        int shift = 0;
+        for (int i = 0; i < note.length(); i++) {
+            if (note.charAt(i) == '#')
+                shift++;
+            else if (note.charAt(i) == 'b')
+                shift--;
+        }
+        if (!order)
+            shift *= -1;
+        return shift;
+    }
+
+    private static String getIntervalAsc(String firstNote, String endNote) {
+        int noteGap = getNoteGapForInterval(firstNote, endNote);
+        int firstNoteShift = getAccidentalShift(firstNote);
+        int endNoteShift = getAccidentalShift(endNote);
+        int semitoneGap = endNoteShift - firstNoteShift;
+        int step;
+
+        if (noteGap == 8 && semitoneGap == 0)
+            return "P8";
+        else if (noteGap == 8)
+            return getIntervalNameByGaps(noteGap, semitoneGap);
+        if (noteGap == 2 && semitoneGap < 0) {
+            semitoneGap *= -1;
+            return getIntervalNameByGaps(noteGap, semitoneGap);
+        } else if (noteGap == 2 && semitoneGap > 0)
+            return getIntervalNameByGaps(noteGap, semitoneGap);
+        outsideLoop:
+        for (int i = 0; i < notes.length; i++) {
+            if (firstNote.substring(0, 1).equals(notes[i])) {
+                for (int j = i; j < notes.length; j++) {
+                    if (j == endNotePosition) {
+                        break outsideLoop;
+                    }
+                    if (j == notes.length - 1) {
+                        step = 1;
+                        j = -1;
+                        semitoneGap += step;
+                    } else if (notes[j].equals("E")) {
+                        step = 1;
+                        semitoneGap += step;
+                    } else {
+                        step = 2;
+                        semitoneGap += step;
+                    }
+                }
+            }
+        }
+        return getIntervalNameByGaps(noteGap, semitoneGap);
+    }
+
+    private static String getIntervalDsc(String firstNote, String endNote){
+        int noteGap = getNoteGapForInterval(firstNote, endNote);
+        int firstNoteShift = getAccidentalShift(firstNote);
+        int endNoteShift = getAccidentalShift(endNote);
+        int semitoneGap = endNoteShift - firstNoteShift;
+        int step;
+
+        if (noteGap == 8 && semitoneGap == 0)
+            return "P8";
+        else if (noteGap == 8)
+            return getIntervalNameByGaps(noteGap, semitoneGap);
+        if (noteGap == 2 && semitoneGap < 0) {
+            semitoneGap *= -1;
+            return getIntervalNameByGaps(noteGap, semitoneGap);
+        } else if (noteGap == 2 && semitoneGap > 0)
+            return getIntervalNameByGaps(noteGap, semitoneGap);
+        outsideLoop:
+        for (int i = notes.length-1; i >= 0; i--) {
+            if (firstNote.substring(0, 1).equals(notes[i])) {
+                for (int j = i; j < notes.length; j--) {
+                    if (j == endNotePosition) {
+                        break outsideLoop;
+                    }
+                    if (j == 0) {
+                        step = 1;
+                        j = notes.length;
+                        semitoneGap += step;
+                    } else if (notes[j].equals("F")) {
+                        step = 1;
+                        semitoneGap += step;
+                    } else {
+                        step = 2;
+                        semitoneGap += step;
+                    }
+                }
+            }
+        }
+        return getIntervalNameByGaps(noteGap, semitoneGap);
+    }
+
 
     private static String getClearIntervalNote(String firstNote) {
         if (order) {
@@ -153,7 +291,7 @@ public class Intervals {
                 }
             }
         }
-        return null;
+        throw new IllegalArgumentException("Illegal note name");
     }
 
 
@@ -213,5 +351,47 @@ public class Intervals {
             default:
                 throw new IllegalArgumentException("Illegal interval name");
         }
+    }
+
+    private static String getIntervalNameByGaps(int noteGap, int semitoneGap) {
+        switch (noteGap) {
+            case 2:
+                if (semitoneGap == 1)
+                    return "m2";
+                if (semitoneGap == 2)
+                    return "M2";
+                break;
+            case 3:
+                if (semitoneGap == 3)
+                    return "m3";
+                if (semitoneGap == 4)
+                    return "M3";
+                break;
+            case 4:
+                if (semitoneGap == 5)
+                    return "P4";
+                break;
+            case 5:
+                if (semitoneGap == 7)
+                    return "P5";
+                break;
+            case 6:
+                if (semitoneGap == 8)
+                    return "m6";
+                if (semitoneGap == 9)
+                    return "M6";
+                break;
+            case 7:
+                if (semitoneGap == 10)
+                    return "m7";
+                if (semitoneGap == 11)
+                    return "M7";
+                break;
+            case 8:
+                if (semitoneGap == 12)
+                    return "P8";
+                break;
+        }
+        throw new IllegalArgumentException("Interval doesn't exist");
     }
 }

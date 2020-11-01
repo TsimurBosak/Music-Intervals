@@ -1,5 +1,7 @@
 public class Intervals {
 
+    private static boolean order = true;
+
     private static int noteGap;
 
     private static int semitoneGap;
@@ -16,33 +18,32 @@ public class Intervals {
             throw new IllegalArgumentException("Illegal number of elements in input array");
         getNoteGapInterval(args[0]);
         if (args.length == 3) {
-            if (args[2].equals("dsc"))
+            if (args[2].equals("dsc")) {
+                order = false;
                 return getResultNoteDesc(args[1]);
+            }
         }
         return getResultNoteAsc(args[1]);
     }
+
 
     public static String intervalIdentification(String[] args) {
         return "";
     }
 
     private static String getResultNoteAsc(String firstNote) {
-        String finalNote = getClearIntervalNoteAsc(firstNote);
+        String finalNote = getClearIntervalNote(firstNote);
         if (firstNote.substring(0, 1).equals(finalNote))
             return firstNote;
         int gap = semitoneGap;
         int step;
         if (getAccidental(firstNote) != null)
-            gap = changeGapByAccidentalAsc(gap,firstNote);
+            gap = changeGapByAccidentalAsc(gap, firstNote);
         outsideLoop:
         for (int i = 0; i < notes.length; i++) {
             if (firstNote.substring(0, 1).equals(notes[i])) {
                 for (int j = i; j < notes.length; j++) {
                     if (notes[j].equals(finalNote) && gap < 3) {
-                        break outsideLoop;
-                    } else if (notes[j].equals(finalNote)) {
-                        step = 1;
-                        gap -= step;
                         break outsideLoop;
                     }
                     if (j == notes.length - 1) {
@@ -59,26 +60,22 @@ public class Intervals {
                 }
             }
         }
-        return ascSwitch(gap,firstNote);
+        return finalSwitch(gap, firstNote);
     }
 
     private static String getResultNoteDesc(String firstNote) {
-        String finalNote = getClearIntervalNoteDesc(firstNote);
+        String finalNote = getClearIntervalNote(firstNote);
         if (firstNote.substring(0, 1).equals(finalNote))
             return firstNote;
         int gap = semitoneGap;
         int step;
         if (getAccidental(firstNote) != null)
-            gap = changeGapByAccidentalDesc(gap,firstNote);
+            gap = changeGapByAccidentalDesc(gap, firstNote);
         outsideLoop:
         for (int i = notes.length - 1; i >= 0; i--) {
             if (firstNote.substring(0, 1).equals(notes[i])) {
                 for (int j = i; j < notes.length; j--) {
                     if (notes[j].equals(finalNote) && gap < 3) {
-                        break outsideLoop;
-                    } else if (notes[j].equals(finalNote)) {
-                        step = 1;
-                        gap += step;
                         break outsideLoop;
                     }
                     if (j == 0) {
@@ -95,80 +92,65 @@ public class Intervals {
                 }
             }
         }
-        return dscSwitch(gap,firstNote);
+        return finalSwitch(gap, firstNote);
     }
 
-    private static int changeGapByAccidentalAsc(int gap, String note){
+    private static int changeGapByAccidentalAsc(int gap, String note) {
         if (note.substring(1).equals("b"))
             gap--;
         else gap++;
         return gap;
     }
 
-    private static int changeGapByAccidentalDesc(int gap, String note){
+    private static int changeGapByAccidentalDesc(int gap, String note) {
         if (note.substring(1).equals("b"))
             gap++;
         else gap--;
         return gap;
     }
 
-    private static String ascSwitch(int gap, String firstNote){
-        switch (gap) {
-            case -2:
-                return getClearIntervalNoteAsc(firstNote) + "bb";
-            case -1:
-                return getClearIntervalNoteAsc(firstNote) + "b";
-            case 0:
-                return getClearIntervalNoteAsc(firstNote);
-            case 1:
-                return getClearIntervalNoteAsc(firstNote) + "#";
-            case 2:
-                return getClearIntervalNoteAsc(firstNote) + "##";
+    private static String finalSwitch(int gap, String firstNote) {
+        if (!order) {
+            gap *= -1;
         }
-        return null;
-    }
-
-    private static String dscSwitch(int gap, String firstNote){
         switch (gap) {
             case -2:
-                return getClearIntervalNoteDesc(firstNote) + "##";
+                return getClearIntervalNote(firstNote) + "bb";
             case -1:
-                return getClearIntervalNoteDesc(firstNote) + "#";
+                return getClearIntervalNote(firstNote) + "b";
             case 0:
-                return getClearIntervalNoteDesc(firstNote);
+                return getClearIntervalNote(firstNote);
             case 1:
-                return getClearIntervalNoteDesc(firstNote) + "b";
+                return getClearIntervalNote(firstNote) + "#";
             case 2:
-                return getClearIntervalNoteDesc(firstNote) + "bb";
+                return getClearIntervalNote(firstNote) + "##";
         }
         return null;
     }
 
 
-    private static String getClearIntervalNoteAsc(String firstNote) {
-        for (int i = 0; i < notes.length; i++) {
-            if (firstNote.substring(0, 1).equals(notes[i])) {
-                if (i + noteGap > notes.length) {
-                    if (notes.length - noteGap - i + 1 > 0)
-                        return notes[notes.length - noteGap - i + 1];
-                    return notes[noteGap + i - 1 - notes.length];
-                } else
-                    return notes[i + noteGap - 1];
+    private static String getClearIntervalNote(String firstNote) {
+        if (order) {
+            for (int i = 0; i < notes.length; i++) {
+                if (firstNote.substring(0, 1).equals(notes[i])) {
+                    if (i + noteGap > notes.length) {
+                        if (notes.length - noteGap - i + 1 > 0)
+                            return notes[notes.length - noteGap - i + 1];
+                        return notes[noteGap + i - 1 - notes.length];
+                    } else
+                        return notes[i + noteGap - 1];
+                }
             }
-        }
-        return null;
-    }
-
-
-    private static String getClearIntervalNoteDesc(String firstNote) {
-        for (int i = 0; i < notes.length; i++) {
-            if (firstNote.substring(0, 1).equals(notes[i])) {
-                if (i - noteGap < 0) {
-                    if (notes.length - noteGap + i + 1 < 7)
-                        return notes[notes.length - noteGap + i + 1];
-                    return notes[0];
-                } else
-                    return notes[i - noteGap + 1];
+        } else {
+            for (int i = 0; i < notes.length; i++) {
+                if (firstNote.substring(0, 1).equals(notes[i])) {
+                    if (i - noteGap < 0) {
+                        if (notes.length - noteGap + i + 1 < 7)
+                            return notes[notes.length - noteGap + i + 1];
+                        return notes[0];
+                    } else
+                        return notes[i - noteGap + 1];
+                }
             }
         }
         return null;

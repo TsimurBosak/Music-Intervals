@@ -14,6 +14,11 @@ public class Intervals {
 
     private static String[] allowedToInputNotes = new String[]{"Cb", "C", "C#", "Db", "D", "D#", "Eb", "E", "E#", "Fb", "F",
             "F#", "Gb", "G", "G#", "Ab", "A", "A#", "Bb", "B", "B#"};
+
+    public static String[] allowedToInputNotesExtended = new String[] {"Cbb", "Cb", "C", "C#", "C##", "Dbb", "Db", "D",
+            "D#", "D##", "Ebb", "Eb", "E", "E#", "E##", "Fbb", "Fb", "F", "F#", "F##", "Gbb", "Gb", "G", "G#", "G##",
+            "Abb", "Ab", "A", "A#", "A##", "Bbb", "Bb", "B", "B#", "B##"};
+
     private static String[] allowedToInputIntervals = new String[]{"m2", "M2", "m3", "M3", "P4", "P5", "m6", "M6", "m7", "M7", "P8"};
 
 
@@ -21,6 +26,7 @@ public class Intervals {
         if (args.length > 3 || args.length < 2)
             throw new IllegalArgumentException("Illegal number of elements in input array");
         getNoteGapInterval(args[0]);
+        checkIsAllowedToInputNote(args[1]);
         if (args.length == 3) {
             if (args[2].equals("dsc")) {
                 order = false;
@@ -34,6 +40,7 @@ public class Intervals {
     public static String intervalIdentification(String[] args) {
         if (args.length > 3 || args.length < 2)
             throw new IllegalArgumentException("Illegal number of elements in input array");
+        checkIsAllowedToInputNotes(args[0],args[1]);
         if (args.length == 3) {
             if (args[2].equals("dsc")) {
                 order = false;
@@ -42,6 +49,7 @@ public class Intervals {
         }
         return getIntervalAsc(args[0], args[1]);
     }
+
 
     private static String getResultNoteAsc(String firstNote) {
         String finalNote = getClearIntervalNote(firstNote);
@@ -187,6 +195,7 @@ public class Intervals {
     }
 
     private static String getIntervalAsc(String firstNote, String endNote) {
+
         int noteGap = getNoteGapForInterval(firstNote, endNote);
         int firstNoteShift = getAccidentalShift(firstNote);
         int endNoteShift = getAccidentalShift(endNote);
@@ -197,11 +206,7 @@ public class Intervals {
             return "P8";
         else if (noteGap == 8)
             return getIntervalNameByGaps(noteGap, semitoneGap);
-        if (noteGap == 2 && semitoneGap < 0) {
-            semitoneGap *= -1;
-            return getIntervalNameByGaps(noteGap, semitoneGap);
-        } else if (noteGap == 2 && semitoneGap > 0)
-            return getIntervalNameByGaps(noteGap, semitoneGap);
+
         outsideLoop:
         for (int i = 0; i < notes.length; i++) {
             if (firstNote.substring(0, 1).equals(notes[i])) {
@@ -227,6 +232,7 @@ public class Intervals {
     }
 
     private static String getIntervalDsc(String firstNote, String endNote){
+
         int noteGap = getNoteGapForInterval(firstNote, endNote);
         int firstNoteShift = getAccidentalShift(firstNote);
         int endNoteShift = getAccidentalShift(endNote);
@@ -237,11 +243,7 @@ public class Intervals {
             return "P8";
         else if (noteGap == 8)
             return getIntervalNameByGaps(noteGap, semitoneGap);
-        if (noteGap == 2 && semitoneGap < 0) {
-            semitoneGap *= -1;
-            return getIntervalNameByGaps(noteGap, semitoneGap);
-        } else if (noteGap == 2 && semitoneGap > 0)
-            return getIntervalNameByGaps(noteGap, semitoneGap);
+
         outsideLoop:
         for (int i = notes.length-1; i >= 0; i--) {
             if (firstNote.substring(0, 1).equals(notes[i])) {
@@ -299,6 +301,31 @@ public class Intervals {
         if (note.length() > 1)
             return note.substring(1);
         return null;
+    }
+
+    private static void checkIsAllowedToInputNote(String firstNote){
+        boolean isValid = false;
+        for (String note:
+             allowedToInputNotes) {
+            if (note.equals(firstNote))
+                isValid = true;
+        }
+        if (!isValid)
+            throw new IllegalArgumentException("This note are not allowed to input");
+    }
+
+    private static void checkIsAllowedToInputNotes(String firstNote, String endNote){
+        boolean isValidFirst = false;
+        boolean isValidEnd = false;
+        for (String note:
+             allowedToInputNotesExtended) {
+            if (note.equals(firstNote))
+                isValidFirst = true;
+            if (note.equals(endNote))
+                isValidEnd = true;
+        }
+        if (!isValidFirst || !isValidEnd)
+            throw new IllegalArgumentException("This note or both notes are not allowed to input");
     }
 
 
@@ -392,6 +419,6 @@ public class Intervals {
                     return "P8";
                 break;
         }
-        throw new IllegalArgumentException("Interval doesn't exist");
+        throw new IllegalArgumentException("Cannot identify the interval");
     }
 }

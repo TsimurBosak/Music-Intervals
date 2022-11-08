@@ -1,2 +1,2 @@
-# Timur-Bosak-Academy-Test-Task
-Task for Syberry
+# Music intervals caclulator
+Just for fun
